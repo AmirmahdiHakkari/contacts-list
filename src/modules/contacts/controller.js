@@ -34,6 +34,8 @@ function handleUniqueConstraintError(error, res) {
 
 export async function contactList(req, res) {
   try {
+    const userId = req.user.id;
+
     let { page = 1, limit = 10, name, phone, q } = req.query;
 
     page = parseInt(page, 10);
@@ -45,9 +47,9 @@ export async function contactList(req, res) {
 
     const offset = (page - 1) * limit;
 
-    const conditions = [];
-    const values = [];
-    let index = 1;
+    const conditions = ["user_id = $1"];
+    const values = [userId];
+    let index = 2;
 
     if (name) {
       conditions.push(`name ILIKE $${index}`);
@@ -67,8 +69,7 @@ export async function contactList(req, res) {
       index += 1;
     }
 
-    const whereClause =
-      conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     const countQuery = `
       SELECT COUNT(*) AS total
@@ -108,11 +109,12 @@ export async function contactList(req, res) {
 export async function getContactById(req, res) {
   const { id } = req.params;
   const publicId = id.trim();
+  const userId = req.user.id;
 
   try {
     const result = await query(
-      "SELECT * FROM contacts WHERE public_id = $1",
-      [publicId],
+      "SELECT * FROM contacts WHERE public_id = $1 AND user_id = $2",
+      [publicId, userId],
     );
 
     if (result.rows.length === 0) {
@@ -126,17 +128,19 @@ export async function getContactById(req, res) {
   }
 }
 
+
 export async function createContact(req, res) {
   const { name, phone } = req.body;
+  const userId = req.user.id;
   const publicId = uuidv4();
 
   try {
     const insertQuery = `
-      INSERT INTO contacts (public_id, name, phone)
-      VALUES ($1, $2, $3)
+      INSERT INTO contacts (public_id, name, phone, user_id)
+      VALUES ($1, $2, $3, $4)
       RETURNING *;
     `;
-    const values = [publicId, name, phone];
+    const values = [publicId, name, phone, userId];
 
     const result = await query(insertQuery, values);
 
@@ -155,9 +159,11 @@ export async function createContact(req, res) {
   }
 }
 
+
 export async function updateContact(req, res) {
   const { id } = req.params;
   const publicId = id.trim();
+  const userId = req.user.id;
   const { name, phone } = req.body;
 
   const fields = [];
@@ -183,11 +189,12 @@ export async function updateContact(req, res) {
   }
 
   values.push(publicId);
+  values.push(userId);
 
   const updateQuery = `
     UPDATE contacts
     SET ${fields.join(", ")}
-    WHERE public_id = $${index}
+    WHERE public_id = $${index} AND user_id = $${index + 1}
     RETURNING *;
   `;
 
@@ -213,14 +220,16 @@ export async function updateContact(req, res) {
   }
 }
 
+
 export async function deleteContact(req, res) {
   const { id } = req.params;
   const publicId = id.trim();
+  const userId = req.user.id;
 
   try {
     const result = await query(
-      "DELETE FROM contacts WHERE public_id = $1 RETURNING *;",
-      [publicId],
+      "DELETE FROM contacts WHERE public_id = $1 AND user_id = $2 RETURNING *;",
+      [publicId, userId],
     );
 
     if (result.rows.length === 0) {

@@ -7,7 +7,7 @@ const pool = new Pool({
   user: process.env.PGUSER,
   password: process.env.PGPASSWORD,
   database: process.env.PGDATABASE,
-  port: process.env.PGPORT ? Number(process.env.PGPORT) : 5432,
+  port: Number(process.env.PGPORT),
 });
 
 export function query(text, params) {
