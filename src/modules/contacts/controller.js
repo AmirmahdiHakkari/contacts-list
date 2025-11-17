@@ -32,7 +32,7 @@ function handleUniqueConstraintError(error, res) {
   return false;
 }
 
-export async function contactList(req, res) {
+export async function contactList(req, res, next) {
   try {
     const userId = req.user.id;
 
@@ -102,11 +102,11 @@ export async function contactList(req, res) {
     });
   } catch (error) {
     console.error("Error in contactList:", error);
-    return res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 }
 
-export async function getContactById(req, res) {
+export async function getContactById(req, res, next) {
   const { id } = req.params;
   const publicId = id.trim();
   const userId = req.user.id;
@@ -114,7 +114,7 @@ export async function getContactById(req, res) {
   try {
     const result = await query(
       "SELECT * FROM contacts WHERE public_id = $1 AND user_id = $2",
-      [publicId, userId],
+      [publicId, userId]
     );
 
     if (result.rows.length === 0) {
@@ -124,12 +124,11 @@ export async function getContactById(req, res) {
     return res.json(result.rows[0]);
   } catch (error) {
     console.error("Error in getContactById:", error);
-    return res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 }
 
-
-export async function createContact(req, res) {
+export async function createContact(req, res, next) {
   const { name, phone } = req.body;
   const userId = req.user.id;
   const publicId = uuidv4();
@@ -155,12 +154,11 @@ export async function createContact(req, res) {
       return;
     }
 
-    return res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 }
 
-
-export async function updateContact(req, res) {
+export async function updateContact(req, res, next) {
   const { id } = req.params;
   const publicId = id.trim();
   const userId = req.user.id;
@@ -216,12 +214,11 @@ export async function updateContact(req, res) {
       return;
     }
 
-    return res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 }
 
-
-export async function deleteContact(req, res) {
+export async function deleteContact(req, res, next) {
   const { id } = req.params;
   const publicId = id.trim();
   const userId = req.user.id;
@@ -229,7 +226,7 @@ export async function deleteContact(req, res) {
   try {
     const result = await query(
       "DELETE FROM contacts WHERE public_id = $1 AND user_id = $2 RETURNING *;",
-      [publicId, userId],
+      [publicId, userId]
     );
 
     if (result.rows.length === 0) {
@@ -242,6 +239,6 @@ export async function deleteContact(req, res) {
     });
   } catch (error) {
     console.error("Error in deleteContact:", error);
-    return res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 }

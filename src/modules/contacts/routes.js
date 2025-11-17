@@ -1,4 +1,3 @@
-// src/modules/contacts/routes.js
 import express from "express";
 import { validate } from "../../middlewares/validate.js";
 import {

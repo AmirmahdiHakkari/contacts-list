@@ -31,6 +31,5 @@ export const updateContactSchema = Joi.object({
 })
   .or("name", "phone")
   .messages({
-    "object.missing":
-      "حداقل یکی از فیلدهای نام یا شماره تلفن باید ارسال شود",
+    "object.missing": "حداقل یکی از فیلدهای نام یا شماره تلفن باید ارسال شود",
   });

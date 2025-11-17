@@ -21,7 +21,7 @@ function handleUserUniqueConstraintError(error, res) {
   return false;
 }
 
-export async function userList(req, res) {
+export async function userList(req, res, next) {
   try {
     let { page = 1, limit = 10, name } = req.query;
 
@@ -77,12 +77,12 @@ export async function userList(req, res) {
       },
     });
   } catch (error) {
-    console.error("Error in contactList:", error);
-    return res.status(500).json({ message: "Server error" });
+    console.error("Error in userList:", error);
+    return next(error);
   }
 }
 
-export async function register(req, res) {
+export async function register(req, res, next) {
   const { name, password } = req.body;
 
   try {
@@ -108,11 +108,11 @@ export async function register(req, res) {
 
     if (handleUserUniqueConstraintError(error, res)) return;
 
-    return res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 }
 
-export async function login(req, res) {
+export async function login(req, res, next) {
   const { name, password } = req.body;
 
   try {
@@ -140,8 +140,8 @@ export async function login(req, res) {
       name: user.name,
     };
 
-    const secret = process.env.JWT_SECRET;
-    const expiresIn = process.env.JWT_EXPIRES_IN;
+    const secret = process.env.JWT_SECRET || "dev_secret_key";
+    const expiresIn = process.env.JWT_EXPIRES_IN || "1h";
 
     const token = jwt.sign(payload, secret, { expiresIn });
 
@@ -154,6 +154,6 @@ export async function login(req, res) {
     });
   } catch (error) {
     console.error("Error in login:", error);
-    return res.status(500).json({ message: "Server error" });
+    return next(error);
   }
 }
