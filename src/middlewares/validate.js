@@ -1,3 +1,5 @@
+import { AppError } from "../utils/AppError.js";
+
 export function validate(schema) {
   return (req, res, next) => {
     const options = {
@@ -14,10 +16,9 @@ export function validate(schema) {
         message: detail.message,
       }));
 
-      return res.status(400).json({
-        message: "خطا در اعتبارسنجی ورودی‌ها",
-        errors,
-      });
+      return next(
+        new AppError(400, "خطا در اعتبارسنجی ورودی‌ها", { errors })
+      );
     }
 
     req.body = value;

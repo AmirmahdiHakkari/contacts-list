@@ -20,15 +20,28 @@ app.get("/", (req, res) => {
   res.json({ message: "Contact API is running" });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
-
 app.use(notFoundHandler);
+
 app.use(errorHandler);
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+process.on("uncaughtException", (err) => {
+  console.error("UNCAUGHT EXCEPTION! Shutting down...", err);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("UNHANDLED REJECTION! Shutting down...", err);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+export default app;

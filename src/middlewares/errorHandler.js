@@ -67,7 +67,10 @@ export function errorHandler(err, req, res, next) {
     err.code === "ECONNRESET" ||
     err.code === "ETIMEDOUT" ||
     err.code === "ENOTFOUND" ||
-    err.code === "EPIPE"
+    err.code === "EPIPE" ||
+    err.code === "EAI_AGAIN" ||
+    err.code === "EHOSTUNREACH" ||
+    err.code === "ECONNABORTED"
   ) {
     return res.status(503).json({
       message:
