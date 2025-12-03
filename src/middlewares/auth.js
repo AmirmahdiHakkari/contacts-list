@@ -38,7 +38,7 @@ export function auth(req, res, next) {
 
     return next();
   } catch (error) {
-    console.error("JWT verify error:", error.message);
+    req.log?.warn("JWT verify error", { message: error.message });
     return next(
       new AppError(401, "توکن نامعتبر یا منقضی شده است", {
         isOperational: true,

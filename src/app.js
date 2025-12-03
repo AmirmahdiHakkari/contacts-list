@@ -8,13 +8,21 @@ import { auth } from "./middlewares/auth.js";
 import { notFoundHandler } from "./middlewares/notFoundHandler.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
+import { requestContext } from "./middlewares/requestContext.js";
+import { httpLogger } from "./middlewares/httpLogger.js";
+import { logger } from "./config/logger.js";
+
 const app = express();
 
 app.use(express.json());
 
+app.use(requestContext);
+
+app.use(httpLogger);
+
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/auth", userRouter);
-app.use("/contact", auth, contactRouter);
+app.use("/contacts", auth, contactRouter);
 
 app.get("/", (req, res) => {
   res.json({ message: "Contact API is running" });
@@ -31,17 +39,13 @@ const server = app.listen(PORT, () => {
 });
 
 process.on("uncaughtException", (err) => {
-  console.error("UNCAUGHT EXCEPTION! Shutting down...", err);
-  server.close(() => {
-    process.exit(1);
-  });
+  logger.error("UNCAUGHT EXCEPTION! Shutting down...", { err });
+  process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
-  console.error("UNHANDLED REJECTION! Shutting down...", err);
-  server.close(() => {
-    process.exit(1);
-  });
+  logger.error("UNHANDLED REJECTION! Shutting down...", { err });
+  process.exit(1);
 });
 
 export default app;

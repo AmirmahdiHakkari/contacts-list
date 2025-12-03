@@ -80,7 +80,7 @@ export async function contactList(req, res, next) {
     const totalPages = Math.ceil(total / limit);
 
     const dataQuery = `
-      SELECT id, public_id, name, phone, description, created_at, updated_at
+      SELECT id, public_id, name, phone, created_at
       FROM contacts
       ${whereClause}
       ORDER BY created_at DESC
@@ -102,7 +102,8 @@ export async function contactList(req, res, next) {
       },
     });
   } catch (error) {
-    console.error("Error in contactList:", error);
+    req.log.error("Error in contactList", { err: error });
+
     return next(error);
   }
 }
@@ -113,7 +114,7 @@ export async function getContactById(req, res, next) {
     const { id } = req.params;
 
     const selectQuery = `
-      SELECT id, public_id, name, phone, description, created_at, updated_at
+      SELECT id, public_id, name, phone, created_at
       FROM contacts
       WHERE public_id = $1 AND user_id = $2
       LIMIT 1;
@@ -133,7 +134,8 @@ export async function getContactById(req, res, next) {
       contact: result.rows[0],
     });
   } catch (error) {
-    console.error("Error in getContactById:", error);
+    req.log.error("Error in getContactById", { err: error });
+
     return next(error);
   }
 }
@@ -141,30 +143,24 @@ export async function getContactById(req, res, next) {
 export async function createContact(req, res, next) {
   try {
     const userId = req.user.id;
-    const { name, phone, description } = req.body;
+    const { name, phone } = req.body;
 
     const publicId = uuidv4();
 
     const insertQuery = `
-      INSERT INTO contacts (public_id, name, phone, description, user_id)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, public_id, name, phone, description, created_at, updated_at;
+      INSERT INTO contacts (public_id, name, phone, user_id)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, public_id, name, phone, created_at;
     `;
 
-    const result = await query(insertQuery, [
-      publicId,
-      name,
-      phone,
-      description || null,
-      userId,
-    ]);
+    const result = await query(insertQuery, [publicId, name, phone, userId]);
 
     return res.status(201).json({
       message: "مخاطب با موفقیت ایجاد شد",
       contact: result.rows[0],
     });
   } catch (error) {
-    console.error("Error in createContact:", error);
+    req.log.error("Error in createContact", { err: error });
 
     const appError = mapContactUniqueConstraintError(error);
     if (appError) {
@@ -179,23 +175,20 @@ export async function updateContact(req, res, next) {
   try {
     const userId = req.user.id;
     const { id } = req.params;
-    const { name, phone, description } = req.body;
+    const { name, phone } = req.body;
 
     const updateQuery = `
       UPDATE contacts
       SET
-        name = COALESCE($1, name),
-        phone = COALESCE($2, phone),
-        description = COALESCE($3, description),
-        updated_at = NOW()
-      WHERE public_id = $4 AND user_id = $5
-      RETURNING id, public_id, name, phone, description, created_at, updated_at;
+      name = COALESCE($1, name),
+      phone = COALESCE($2, phone)
+      WHERE public_id = $3 AND user_id = $4
+      RETURNING id, public_id, name, phone, created_at;
     `;
 
     const result = await query(updateQuery, [
       name ?? null,
       phone ?? null,
-      description ?? null,
       id,
       userId,
     ]);
@@ -213,7 +206,7 @@ export async function updateContact(req, res, next) {
       contact: result.rows[0],
     });
   } catch (error) {
-    console.error("Error in updateContact:", error);
+    req.log.error("Error in updateContact", { err: error });
 
     const appError = mapContactUniqueConstraintError(error);
     if (appError) {
@@ -232,7 +225,7 @@ export async function deleteContact(req, res, next) {
     const deleteQuery = `
       DELETE FROM contacts
       WHERE public_id = $1 AND user_id = $2
-      RETURNING id, public_id, name, phone, description, created_at, updated_at;
+      RETURNING id, public_id, name, phone, created_at;
     `;
 
     const result = await query(deleteQuery, [id, userId]);
@@ -250,7 +243,8 @@ export async function deleteContact(req, res, next) {
       contact: result.rows[0],
     });
   } catch (error) {
-    console.error("Error in deleteContact:", error);
+    req.log.error("Error in deleteContact", { err: error });
+
     return next(error);
   }
 }

@@ -82,7 +82,8 @@ export async function userList(req, res, next) {
       },
     });
   } catch (error) {
-    console.error("Error in userList:", error);
+    req.log.error("Error in userList", { err: error });
+
     return next(error);
   }
 }
@@ -108,7 +109,7 @@ export async function register(req, res, next) {
       user,
     });
   } catch (error) {
-    console.error("Error in register:", error);
+    req.log.error("Error in register", { err: error });
 
     const appError = mapUserUniqueConstraintError(error);
     if (appError) {
@@ -169,7 +170,7 @@ export async function login(req, res, next) {
       user: safeUser,
     });
   } catch (error) {
-    console.error("Error in login:", error);
+    req.log.error("Error in login", { err: error });
     return next(error);
   }
 }
